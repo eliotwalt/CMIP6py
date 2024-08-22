@@ -1,0 +1,7 @@
+__pycache__
+.ipynb_checkpoints/
+*.pyc
+
+data/
+notebooks/debug.ipynb
+*.nc
