@@ -91,6 +91,14 @@ class CMIP6Dataset:
             cmip6_dataset = cls(matching_files)
             cmip6_datasets.append(cmip6_dataset)
         return cmip6_datasets
+    
+    def _filter_running_nodes(self):
+        """
+        returns a copy of the dataset in which the entries of all files exist on nodes that are currently running
+        
+        WARNING: make sure to check for empty datasets and filter them out!!!!
+        """
+        raise NotImplementedError()
 
     def sample_entry_key(self, entry_key):
         """

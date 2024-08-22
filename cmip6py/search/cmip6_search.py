@@ -16,7 +16,7 @@ class CMIP6Search:
         self.max_workers = max_workers
         # attributes that are set by other methods
         self.datasets = None
-        self.dataset_to_local_files = None
+        self.datasets_to_local_files = None
         # state flags
         self.nodes_are_filtered = False
         self.members_are_balanced = False
@@ -25,9 +25,21 @@ class CMIP6Search:
         """
         Returns a copy that only has data from nodes that are running
         """
-        # new = ...
-        # new.nodes_are_filtered = True
-        raise NotImplementedError()
+        new_datasets, new_datasets_to_local_files = [], {}
+        # filter all datasets
+        for dataset in self.datasets:
+            dataset = dataset._filter_running_nodes()
+            if self.datasets_to_local_files is not None and dataset in dataset.name in self.datasets_to_local_files.keys():
+                new_datasets_to_local_files[dataset.name] = self.datasets_to_local_files[dataset.name]
+            new_datasets.append(dataset)
+        # create new search object
+        new = CMIP6Search(self.random_seed, self.max_workers)
+        if len(new_datasets_to_local_files)==0:
+            new_datasets_to_local_files = None
+        new.datasets = new_datasets
+        new.datasets_to_local_files = new_datasets_to_local_files
+        new.nodes_are_filtered = True
+        return new
     
     def search(self, facets):
         # do search
@@ -83,8 +95,8 @@ class CMIP6Search:
             if not self.members_are_balanced:
                 logger.warning(f"Downloading without having balanced members. This could take up a lot of space on disk.")
             # launch downloads
-            self.dataset_to_local_files = {
-                dataset: dataset.download(dest_folder, max_workers)
+            self.datasets_to_local_files = {
+                dataset.name: dataset.download(dest_folder, max_workers)
                 for dataset in self.datasets
             }
             
