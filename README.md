@@ -22,40 +22,69 @@ The entry point class is `CMIP6py.search.cmip6_search.CMIP6Search`, which allows
 
 Below is a basic CMIP6py workflow:
 ```python
->>> from cmip6py import search
+>>> from cmip6py.search.cmip6_search import search
 
 # defined search facets
->>> search_facets = {"experiment_id": ["historical", "ssp245", "ssp370"], "source_id": ["EC-Earth3", "MPI-ESM1-2-HR"], "variable": ["tas", "tos", "zg"], "table_id": ["Eday", "day", "Oday"]}
+>>> search_facets = {"experiment_id": ["historical", "ssp245"], "source_id": ["EC-Earth3", "MPI-ESM1-2-HR"], "variable": ["ua", "va"], "table_id": ["Eday", "day", "Oday"]}
 
 # create a CMIP6Search object and perform search
->>> cmip6_search = search(search_facets, random_seed=42, max_workers=6)
+>>> cmip6_search = search(search_facets, random_seed=43, max_workers=12)
 >>> cmip6_search
-CMIP6Search:...
+'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=False,members_are_balanced=False
+
+# filter variable set such that all configurations (i.e. combinations of source_id,experiment_id,member_id) have exactly the same set of variables
+>>> cmip6_search = cmip6_search.strict_variable_set(variable_set=["ua", "va"])
+>>> cmip6_search # for this example every configuration are valid
+'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=False,members_are_balanced=False'
 
 # explore nested structure
 >>> cmip6_search.datasets[0]
-CMIP6Dataset:...
+'CMIP6Dataset:EC-Earth3_historical_r101i1p1f1_ua_19700101-20141231'
 >>> cmip6_search.datasets[0].files[0]
-CMIP6File:...
+'CMIP6File:EC-Earth3_historical_r101i1p1f1_ua_19700101-19701231'
 >>> cmip6_search.datasets[0].files[0].entries[0]
-CMIP6Entry:...
+'CMIP6Entry:ua_day_EC-Earth3_historical_r101i1p1f1_gr_19700101-19701231|esg-dn1.nsc.liu.se'
 
 # plot members distribution
 >>> cmip6_search.summary_plot()
 
 # apply filtering
->>> filtered_cmip6_search = (cmip6search.filter("facets", experiment_id=["historical", "ssp245"]) # only historical and SSP-2.45
-                                        .filter("years", historical=[2010, 2015], projections=[2015, 2021])) # select years
-# balance members 
->>> balanced_cmip6_search = filtered_cmip6_search.balance_members(num_members=4, tolerance=2)
->>> cmip6_search.summary_plot()
+>>> filtered_cmip6_search = (cmip6_search.filter("facets", experiment_id=["historical", "ssp245"]) # only historical and SSP-2.45
+                                         .filter("years", historical=[2010, 2015], projections=[2015, 2021])) # select years
+>>> filtered_cmip6_search
+'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=True,members_are_balanced=False'
 
-# filter running nodes and download
->>> avail_cmip6_search = balanced_cmip6_search.filter("running_nodes")
->>> avail_cmip6_search.download("cmip6_data/")
->>> avail_cmip6_search.dataset_to_local_files
+# filter nodes
+>>> avail_cmip6_search = filtered_cmip6_search.filter("running_nodes")
+>>> avail_cmip6_search
+'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=True,members_are_balanced=False'
+
+# balance members 
+>>> avail_balanced_cmip6_search = avail_cmip6_search.balance_members(num_members=4, tolerance=2)
+>>> avail_balanced_cmip6_search.summary_plot()
+>>> avail_balanced_cmip6_search
+'CMIP6Search:random_seed=43,n_datasets=22,nodes_are_filtered=True,members_are_balanced=True'
+
+# download
+>>> avail_balanced_cmip6_search.download("cmip6_data/")
+>>> avail_balanced_cmip6_search.dataset_to_local_files
 {
-    CMIP6Dataset:... : [...],
+  "EC-Earth3_historical_r113i1p1f1_ua_20100101-20141231": [
+    "cmip6_data/CMIP6/CMIP/EC-Earth3/historical/r113i1p1f1/day/ua/v20200412/ua_day_EC-Earth3_historical_r113i1p1f1_gr_20100101-20101231.nc",
+    ...,
+    "cmip6_data/CMIP6/CMIP/EC-Earth3/historical/r113i1p1f1/day/ua/v20200412/ua_day_EC-Earth3_historical_r113i1p1f1_gr_20140101-20141231.nc"
+  ],
+  "EC-Earth3_historical_r22i1p1f1_ua_20100101-20141231": [
+    "cmip6_data/CMIP6/CMIP/EC-Earth3/historical/r22i1p1f1/day/ua/v20210527/ua_day_EC-Earth3_historical_r22i1p1f1_gr_20100101-20101231.nc",
+    ...,
+    "cmip6_data/CMIP6/CMIP/EC-Earth3/historical/r22i1p1f1/day/ua/v20210527/ua_day_EC-Earth3_historical_r22i1p1f1_gr_20140101-20141231.nc"
+  ],
+  ...,
+  "MPI-ESM1-2-HR_ssp245_r1i1p1f1_va_20150101-20241231": [
+    "cmip6_data/CMIP6/ScenarioMIP/MPI-ESM1-2-HR/ssp245/r1i1p1f1/Eday/va/v20190710/va_Eday_MPI-ESM1-2-HR_ssp245_r1i1p1f1_gn_20150101-20191231.nc",
+    "...",
+    "cmip6_data/CMIP6/ScenarioMIP/MPI-ESM1-2-HR/ssp245/r1i1p1f1/Eday/va/v20190710/va_Eday_MPI-ESM1-2-HR_ssp245_r1i1p1f1_gn_20200101-20241231.nc"
+  ]
 }
 ```
 

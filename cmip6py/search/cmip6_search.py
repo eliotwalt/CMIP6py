@@ -67,6 +67,32 @@ class CMIP6Search:
         new.nodes_are_filtered = self.nodes_are_filtered
         return new
     
+    def strict_variable_set(self, variable_set):
+        """
+        Select model configurations (source_id, experiment_id, member_id) that have all the variables
+        required in the variable set. Additionally, drops the datasets that concern other variables.
+        """
+        variable_set = set(variable_set)
+        def same_model_configuration(dataset):
+            return (dataset.source_id, dataset.experiment_id, dataset.member_id)
+        valid_datasets = []
+        datasets = sorted(self.datasets, key=same_model_configuration)
+        # inspect all configurations
+        for model_configuration, grouped_datasets in groupby(datasets, key=same_model_configuration):
+            grouped_datasets = list(grouped_datasets)
+            observed_variable_set = set(ds.variable for ds in grouped_datasets)
+            # check if asked variable set is subset of obeserved one
+            if variable_set.issubset(observed_variable_set):
+                logger.info(f"{model_configuration} is valid {variable_set} is subset of {observed_variable_set}")
+                valid_datasets.extend(grouped_datasets)
+            else:
+                logger.info(f"{model_configuration} is NOT valid {variable_set} is NOT subset of {observed_variable_set}")
+        # create new CMIP6Search from valid_datasets
+        new = self.sub_copy(valid_datasets)
+        # drop datasets that concern other variables
+        new = new.filter(kind="facets", variable=list(variable_set))
+        return new
+    
     def count_members(self, as_pandas=False):
         members_count = defaultdict(int)
         for dataset in self.datasets:
@@ -82,9 +108,9 @@ class CMIP6Search:
         """
         Returns a copy with balanced number of members per dataset
         """
-        if not self.nodes_are_filtered and filter_running_nodes==False:
+        if not self.nodes_are_filtered and not filter_running_nodes:
             logging.warning(f"balancing members on unfiltered nodes. This will likely select unreachable data!")
-        if filter_running_nodes:
+        if not self.nodes_are_filtered and filter_running_nodes:
             filtered_search = self._filter_running_nodes()
             # apply balance in the filtered search
             return filtered_search.balance_members(num_members, tolerance, False)
@@ -174,8 +200,6 @@ class CMIP6Search:
             if new_dataset is not None: new_datasets.append(new_dataset)
         # create new search object
         new = self.sub_copy(new_datasets)
-        # set flag
-        new.nodes_are_filtered = True
         return new
     
     def filter(self, kind, **kwargs):
