@@ -1,12 +1,11 @@
 import pyesgf.search 
 import requests.exceptions
-import pandas as pd
 import logging
 from functools import lru_cache
+import concurrent.futures
 
-from ..esgf_network.analytics import get_esgf_nodes_status
 from ..commons.constants import PYESGF_CONFIG
-from ..commons.utils import is_iterable_but_not_string
+from ..commons.utils import is_iterable_but_not_string, dict_product
 
 logger = logging.getLogger(__name__)
 
@@ -81,8 +80,6 @@ def search_esgf_nodes(facets, max_workers=1):
     -------
         ESGFSearchError: if the function cannot search ESGF nodes
     """
-    if max_workers > 1:
-        logger.warning(f"max_workers > 1 not implemented yet. searching sequentially")
     # convert facets to pyesgf facets format
     def convert_facet_values(values):
         # comma-separated iterables
@@ -90,7 +87,34 @@ def search_esgf_nodes(facets, max_workers=1):
             return ",".join([convert_facet_values(v) for v in values])
         else:
             return str(values)
-    facets = {facet: convert_facet_values(values) for facet, values in facets.items()}
-    # search
-    results = _search_esgf_nodes(**facets)
+    # sequential search
+    if max_workers == 1:
+        facets = {facet: convert_facet_values(values) for facet, values in facets.items()}
+        results = _search_esgf_nodes(**facets)
+    # parallel search
+    else:
+        # split base and varying facets
+        base_facets, varying_facets = {}, {}
+        for facet, facet_val in facets.items():
+            if facet=="table_id" or isinstance(facet_val, (str, int, float, bool)) or facet_val is None: base_facets[facet] = facet_val
+            elif isinstance(facet_val, (list, tuple)): varying_facets[facet] = tuple(facet_val)
+            else: raise TypeError(f"{facet} must be of type: list, tuple, str, int, float or bool. got {type(facet_val)}")
+        # iterate over product
+        individual_facets_list = dict_product(varying_facets)
+        results = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for individual_facets in individual_facets_list:
+                # build these search facets
+                these_facets = base_facets.copy()
+                these_facets.update(individual_facets)
+                # convert facets
+                these_facets = {facet: convert_facet_values(values) for facet, values in these_facets.items()}
+                # submit
+                futures.append(executor.submit(
+                    _search_esgf_nodes, **these_facets
+                ))
+            for future in concurrent.futures.as_completed(futures):
+                these_results = future.result()
+                results.extend(these_results)
     return results

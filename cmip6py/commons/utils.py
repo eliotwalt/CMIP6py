@@ -1,4 +1,5 @@
 import shutil
+import itertools
 import os
 from pathlib import Path
 from datetime import datetime
@@ -54,3 +55,11 @@ def overlapping_spans(file_start_year, file_stop_year, exp_start_year, exp_stop_
     start_condition = file_start_year < exp_stop_year
     end_condition = file_stop_year >= exp_start_year
     return start_condition and end_condition
+
+def dict_product(input_dict):
+    # Generate the cartesian product of all values
+    keys = input_dict.keys()
+    values = input_dict.values()
+    # Create the list of dictionaries from the Cartesian product
+    result = [dict(zip(keys, combination)) for combination in itertools.product(*values)]
+    return result
