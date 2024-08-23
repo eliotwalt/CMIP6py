@@ -18,6 +18,56 @@ The package is centered around three nested classes:
 
 The entry point class is `CMIP6py.search.cmip6_search.CMIP6Search`, which allows to search ESGF network for any CMIP6 data. It leverages `CMIP6Dataset`s internally and provides additional functionalities such as filtering, balancing, visualisation and download. 
 
+## Examples
+
+Below is a basic CMIP6py workflow:
+```
+>>> from cmip6py import search
+
+# defined search facets
+>>> search_facets = {"experiment_id": ["historical", "ssp245", "ssp370"], "source_id": ["EC-Earth3", "MPI-ESM1-2-HR"], "variable": ["tas", "tos", "zg"], "table_id": ["Eday", "day", "Oday"]}
+
+# create a CMIP6Search object and perform search
+>>> cmip6_search = search(search_facets, random_seed=42, max_workers=6)
+>>> cmip6_search
+CMIP6Search:...
+
+# explore nested structure
+>>> cmip6_search.datasets[0]
+CMIP6Dataset:...
+>>> cmip6_search.datasets[0].files[0]
+CMIP6File:...
+>>> cmip6_search.datasets[0].files[0].entries[0]
+CMIP6Entry:...
+
+# plot members distribution
+>>> cmip6_search.summary_plot()
+
+# apply filtering
+>>> filtered_cmip6_search = (cmip6search.filter("facets", experiment_id=["historical", "ssp245"]) # only historical and SSP-2.45
+                                        .filter("years", historical=[2010, 2015], projections=[2015, 2021])) # select years
+# balance members 
+>>> balanced_cmip6_search = filtered_cmip6_search.balance_members(num_members=4, tolerance=2)
+>>> cmip6_search.summary_plot()
+
+# filter running nodes and download
+>>> avail_cmip6_search = balanced_cmip6_search.filter("running_nodes")
+>>> avail_cmip6_search.download("cmip6_data/")
+>>> avail_cmip6_search.dataset_to_local_files
+{
+    CMIP6Dataset:... : [...],
+}
+```
+
+`CMIP6Search` objects can also be splitted by dataset facets to be processed in parallel. This is particularly useful to build parallel data processing pipelines once the datasets have been downloaded.
+
+```
+>>> avail_cmip6_search.splitby(["source_id", "experiment_id"])
+[CMIP6Search:...,
+CMIP6Search:...,
+...]
+```
+
 ## Installation
 
 Clone this repository and run

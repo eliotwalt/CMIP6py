@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 from itertools import groupby
+import os
+import pickle 
 
 from .search_utils import search_esgf_nodes
 from ..data.dataset import CMIP6Dataset
@@ -32,6 +34,19 @@ class CMIP6Search:
         
     def __repr__(self):
         return f"{self.__class__.__name__}:random_seed={self.random_seed},n_datasets={len(self)},nodes_are_filtered={self.nodes_are_filtered},members_are_balanced={self.members_are_balanced}"
+    
+    def save(self, path):
+        """save to disk"""
+        with open(path, mode="wb") as h:
+            pickle.dump(self, h)
+        return path
+
+    @classmethod
+    def load(cls, path):
+        """load from disk"""
+        with open(path, mode="rb") as h:
+            search = pickle.load(h)
+        return search.copy()
     
     def copy(self):
         new = CMIP6Search(self.random_seed, self.max_workers)
@@ -249,3 +264,8 @@ class CMIP6Search:
         plt.tight_layout()
         if save_path: fig.savefig(save_path)
         plt.show()
+        
+def search(facets, random_seed=42, max_workers=2*os.cpu_count()):
+    cmip6_search = CMIP6Search(random_seed, max_workers)
+    cmip6_search.search(facets)
+    return cmip6_search
