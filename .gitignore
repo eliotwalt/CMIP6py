@@ -4,6 +4,9 @@ __pycache__
 
 *.egg-info
 
+*.drawio
+*.draawio.bkp
+
 cmip6_data/
 notebooks/debug.ipynb
 *.nc

@@ -14,7 +14,7 @@ The package is centered around three nested classes:
 - `cmip6.data.CMIP6File`: Stores a single file within a dataset, i.e. model/experiment/member/variable spanning a time period contained in a larger dataset. Internally, it maintains a list of equivalent `cmip6py.data.entry.CMIP6Entry`s.
 - `cmip6py.data.entry.CMIP6Entry`: Stores  a single instance of a given file that exist on an ESGF node. Entries are considered equivalent when they represent the same data with possible differences in the gridding (i.e. `table_id` and `grid_label` ESGF facets) and version (we might as well download a slighlty older version than nothing).
 
-![class organisation overview](./imgs/classes_org.drawio.png "Organisation of CMIP6py main classes")
+![class organisation overview](./imgs/classes_org.png "Organisation of CMIP6py main classes")
 
 The entry point class is `CMIP6py.search.cmip6_search.CMIP6Search`, which allows to search ESGF network for any CMIP6 data. It leverages `CMIP6Dataset`s internally and provides additional functionalities such as filtering, balancing, visualisation and download. 
 
