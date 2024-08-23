@@ -48,6 +48,9 @@ def set_random_seed(seed):
     
 def overlapping_spans(file_start_year, file_stop_year, exp_start_year, exp_stop_year):
     """
-    Checks that [file_start_year, file_stop_year] overlaps with [exp_start_year, exp_stop_year]
+    Checks that [file_start_year, file_stop_year] overlaps with [exp_start_year, exp_stop_year],
+    where file_stop_year is included if it matches the bound, but file_start_year is excluded if it matches the bound.
     """
-    return max(file_start_year, exp_start_year) <= min(file_stop_year, exp_stop_year)
+    start_condition = file_start_year < exp_stop_year
+    end_condition = file_stop_year >= exp_start_year
+    return start_condition and end_condition

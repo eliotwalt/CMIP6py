@@ -143,7 +143,9 @@ class CMIP6Search:
         """
         Filter datasets to contain only files within the desired span. Returns a new `CMIP6Search`
         
-        experiments_temporal_span (dict): {"historical": [start, stop], "projections": [start, stop]}
+        experiments_temporal_span (dict): {"historical": [start, stop], "projections": [start, stop]}. Note
+            that the start is included and stop is excluded. i.e. to get the full historical run you would
+            need `"historical": [1850, 2015]"` and full projection run `"projections": [2015, 2101]"`
         """
         new_datasets = []
         # filter all datasets

@@ -29,7 +29,7 @@ pip install -e .
 
 **Playwright Sync / Async API in Jupyter notebooks**
 
-This error shows up when running `cmip6py.esgf_network.analytics.get_esgf_nodes_status()` from a jupyter notebook. Run the command in the termninal first to load the status file in cache.
+This error shows up when running `cmip6py.esgf_network.analytics.get_esgf_nodes_status()` from a jupyter notebook. Run the command in the termninal first to load the status file in cache. You can use the `init_esgf_nodes.py` script for that.
 ```
 Error: It looks like you are using Playwright Sync API inside the asyncio loop.
 Please use the Async API instead.
