@@ -30,7 +30,7 @@ Below is a basic CMIP6py workflow:
 # create a CMIP6Search object and perform search
 >>> cmip6_search = search(search_facets, random_seed=43, max_workers=12)
 >>> cmip6_search
-'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=False,members_are_balanced=False
+'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=False,members_are_balanced=False'
 
 # filter variable set such that all configurations (i.e. combinations of source_id,experiment_id,member_id) have exactly the same set of variables
 >>> cmip6_search = cmip6_search.strict_variable_set(variable_set=["ua", "va"])
@@ -92,9 +92,10 @@ Below is a basic CMIP6py workflow:
 
 ```python
 >>> avail_cmip6_search.splitby(["source_id", "experiment_id"])
-[CMIP6Search:...,
-CMIP6Search:...,
-...]
+['CMIP6Search:random_seed=43,n_datasets=6,nodes_are_filtered=True,members_are_balanced=True',
+ 'CMIP6Search:random_seed=43,n_datasets=6,nodes_are_filtered=True,members_are_balanced=True',
+ 'CMIP6Search:random_seed=43,n_datasets=6,nodes_are_filtered=True,members_are_balanced=True',
+ 'CMIP6Search:random_seed=43,n_datasets=4,nodes_are_filtered=True,members_are_balanced=True']
 ```
 
 ## Installation
