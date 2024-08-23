@@ -21,7 +21,7 @@ The entry point class is `CMIP6py.search.cmip6_search.CMIP6Search`, which allows
 ## Examples
 
 Below is a basic CMIP6py workflow:
-```
+```python
 >>> from cmip6py import search
 
 # defined search facets
@@ -61,7 +61,7 @@ CMIP6Entry:...
 
 `CMIP6Search` objects can also be splitted by dataset facets to be processed in parallel. This is particularly useful to build parallel data processing pipelines once the datasets have been downloaded.
 
-```
+```python
 >>> avail_cmip6_search.splitby(["source_id", "experiment_id"])
 [CMIP6Search:...,
 CMIP6Search:...,
