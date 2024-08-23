@@ -2,7 +2,8 @@
 
 CMIP6py allows to interact with CMIP6 data stored on ESGF nodes with python. More specifically, it allows:
 1. Open search of CMIP6 data on ESGF nodes
-2. Download CMIP6 data from ESGF nodes
+2. Filtering and visualising CMIP6 data from ESGF nodes
+3. Download CMIP6 data from ESGF nodes
 
 ## Idea
 
