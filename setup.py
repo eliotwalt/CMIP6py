@@ -12,8 +12,6 @@ class CustomInstallCommand(Command):
         pass
 
     def run(self):
-        # Install xarray
-        # os.system('python -m pip install "xarray[io]"')
         # Run Playwright installation
         os.system('playwright install')
 
