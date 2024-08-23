@@ -4,7 +4,7 @@ import concurrent.futures
 from collections import defaultdict
 
 from .file import CMIP6File
-from ..commons.utils import convert_esgf_file_datetime, convert_version_to_datetime
+from ..commons.utils import convert_esgf_file_datetime, convert_version_to_datetime, overlapping_spans
 from ..commons.exceptions import DownloadError
 from ..commons.constants import RESULTS_FACETS_ORDERING
 
@@ -20,7 +20,8 @@ class CMIP6Dataset:
         self.end_date = max(file.end_date for file in files)
         self.name = self._make_name()
         # files
-        self.files, self.entry_keys_set = self._intersect_entry_keys(files)
+        self.files = files
+        self.entry_keys_set = self._intersect_entry_keys(files)
 
     def __len__(self):
         return len(self.files)
@@ -30,6 +31,9 @@ class CMIP6Dataset:
 
     def __repr__(self):
         return f"{self.__class__.__name__}:{self.name}"
+    
+    def copy(self):
+        return CMIP6Dataset(self.files)
 
     def _make_name(self):
         return self.source_id + "_" + \
@@ -53,7 +57,7 @@ class CMIP6Dataset:
         entry_keys_set = set(files[0].entry_keys)
         for file in files:
             if len(entry_keys_set)==0: entry_keys_set = set(file.entry_keys)
-            else: entry_keys_set &= set(file.entry_keys)            
+            else: entry_keys_set &= set(file.entry_keys)   
         # sort entry_key_set
         versions = sorted([convert_version_to_datetime(entry_key[1]) for entry_key in entry_keys_set])
         def get_sort_key(entry_key):
@@ -63,10 +67,7 @@ class CMIP6Dataset:
                 RESULTS_FACETS_ORDERING["grid_label"].index(entry_key[2]),
             )
         entry_keys_set = list(sorted(entry_keys_set, key=get_sort_key))
-        # filter entries in the files
-        for i in range(len(files)):
-            files[i] = files[i].filter_entries(entry_keys_set, sort=True)
-        return files, entry_keys_set
+        return entry_keys_set
     
     @staticmethod
     def from_results(results):
@@ -98,7 +99,36 @@ class CMIP6Dataset:
         
         WARNING: make sure to check for empty datasets and filter them out!!!!
         """
-        raise NotImplementedError()
+        filtered_files = []
+        # filter every file
+        for file in self.files:
+            filtered_file = file._filter_running_nodes()
+            if filtered_file is not None:
+                filtered_files.append(filtered_file)
+        # return none if empty
+        if len(filtered_files) == 0:
+            logger.warning(f"Filtering runnning nodes on {self} resulted in empty dataset.")
+            return None
+        # create new
+        new_dataset = CMIP6Dataset(filtered_files)
+        return new_dataset
+    
+    def _filter_years(self, temporal_span):
+        """
+        Filters files that are in the temporal_span. Returns a new `CMIP6Dataset` instance.
+        """
+        start_year, stop_year = temporal_span
+        filtered_files = []
+        # check each file to see if they are in span
+        for file in self.files:
+            if overlapping_spans(file.start_date.year, file.end_date.year, start_year, stop_year):
+                filtered_files.append(file.copy())
+        if len(filtered_files)==0:
+            logger.warning(f"Filtering years {start_year} to {stop_year} on {self} resulted in empty dataset.")
+            return None
+        # crearte new
+        new_dataset = CMIP6Dataset(filtered_files)
+        return new_dataset
 
     def sample_entry_key(self, entry_key):
         """

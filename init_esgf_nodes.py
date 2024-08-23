@@ -1,0 +1,3 @@
+from cmip6py.esgf_network.analytics import get_esgf_nodes_status
+
+get_esgf_nodes_status()

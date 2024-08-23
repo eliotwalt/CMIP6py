@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from datetime import datetime
 from collections.abc import Iterable
+import random 
+import numpy as np
 
 from .constants import CACHE_DIR
 
@@ -39,3 +41,13 @@ def convert_esgf_file_datetime(dt):
     
 def convert_version_to_datetime(version):
     return datetime.strptime(version, "v%Y%m%d")
+
+def set_random_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    
+def overlapping_spans(file_start_year, file_stop_year, exp_start_year, exp_stop_year):
+    """
+    Checks that [file_start_year, file_stop_year] overlaps with [exp_start_year, exp_stop_year]
+    """
+    return max(file_start_year, exp_start_year) <= min(file_stop_year, exp_stop_year)

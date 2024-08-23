@@ -9,12 +9,29 @@ CMIP6py allows to interact with CMIP6 data stored on ESGF nodes with python. Mor
 
 The package is centered around three nested classes:
 - `cmip6py.data.dataset.CMIP6Dataset`: Stores an entire dataset, i.e. model/experiment/member/variable for a given time period. Internally, it maintains a list of `cmip6.data.file.CMIP6File`s.
-- `cmip6.data.CMIP6File`: Stores a single file within a dataset, i.e. model/experiment/member/variable spanning a time period contained in a larger dataset. Internally, it maintains a list of `cmip6py.data.file.CMIP6Entry`s. 
-- `cmip6py.data.file.CMIP6Entry`: Stores all the instances of a given file that exist on the nodes of the ESGF network. 
+- `cmip6.data.CMIP6File`: Stores a single file within a dataset, i.e. model/experiment/member/variable spanning a time period contained in a larger dataset. Internally, it maintains a list of `cmip6py.data.entry.CMIP6Entry`s. 
+- `cmip6py.data.entry.CMIP6Entry`: Stores all the instances of a given file that exist on the nodes of the ESGF network. 
 
 ![class organisation overview](./imgs/classes_org.drawio.png "Organisation of CMIP6py main classes")
 
 The entry point class is `CMIP6py.search.cmip6_search.CMIP6Search`, which allows to search ESGF network for any CMIP6 data. It leverages `CMIP6Dataset`s internally and provides additional functionalities such as filtering, balancing, visualisation and download. 
+
+## Installation
+
+Clone this repository and run
+```
+pip install -e .
+```
+
+## Troubleshooting
+
+**Playwright Sync / Async API in Jupyter notebooks**
+
+This error shows up when running `cmip6py.esgf_network.analytics.get_esgf_nodes_status()` from a jupyter notebook. Run the command in the termninal first to load the status file in cache.
+```
+Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.
+```
 
 
 

@@ -3,10 +3,13 @@ import logging
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
+from itertools import groupby
 
 from .search_utils import search_esgf_nodes
 from ..data.dataset import CMIP6Dataset
 from ..commons.constants import HR_MODELS, LR_MODELS
+from ..commons.utils import set_random_seed, is_iterable_but_not_string
 
 logger = logging.getLogger(__name__)
 
@@ -15,36 +18,39 @@ class CMIP6Search:
         self.random_seed = random_seed
         self.max_workers = max_workers
         # attributes that are set by other methods
-        self.datasets = None
-        self.datasets_to_local_files = None
+        self.datasets = []
+        self.datasets_to_local_files = {}
         # state flags
         self.nodes_are_filtered = False
         self.members_are_balanced = False
+        # random seed
+        set_random_seed(self.random_seed)
+        # ADD TO self.copy() IF NEW ATTRIBUTES ARE ADDED
+        
+    def __len__(self):
+        return 0 if self.datasets is None else len(self.datasets)
+        
+    def __repr__(self):
+        return f"{self.__class__.__name__}:random_seed={self.random_seed},n_datasets={len(self)},nodes_are_filtered={self.nodes_are_filtered},members_are_balanced={self.members_are_balanced}"
     
-    def _filter_running_nodes(self):
-        """
-        Returns a copy that only has data from nodes that are running
-        """
-        new_datasets, new_datasets_to_local_files = [], {}
-        # filter all datasets
-        for dataset in self.datasets:
-            dataset = dataset._filter_running_nodes()
-            if self.datasets_to_local_files is not None and dataset in dataset.name in self.datasets_to_local_files.keys():
-                new_datasets_to_local_files[dataset.name] = self.datasets_to_local_files[dataset.name]
-            new_datasets.append(dataset)
-        # create new search object
+    def copy(self):
         new = CMIP6Search(self.random_seed, self.max_workers)
-        if len(new_datasets_to_local_files)==0:
-            new_datasets_to_local_files = None
-        new.datasets = new_datasets
-        new.datasets_to_local_files = new_datasets_to_local_files
-        new.nodes_are_filtered = True
+        new.datasets = self.datasets
+        new.datasets_to_local_files = self.datasets_to_local_files
+        new.nodes_are_filtered = self.nodes_are_filtered
+        new.members_are_balanced = self.members_are_balanced
         return new
     
-    def search(self, facets):
-        # do search
-        results = search_esgf_nodes(facets, self.max_workers)
-        self.datasets = CMIP6Dataset.from_results(results)
+    def sub_copy(self, sub_datasets):
+        new = CMIP6Search(self.random_seed, self.max_workers)
+        new.datasets = sub_datasets
+        new.datasets_to_local_files = {
+            dataset.name: local_files for dataset, local_files in self.datasets_to_local_files.items()
+            if dataset.name in [sds.name for sds in sub_datasets]
+        }
+        new.members_are_balanced = self.members_are_balanced
+        new.nodes_are_filtered = self.nodes_are_filtered
+        return new
     
     def count_members(self, as_pandas=False):
         members_count = defaultdict(int)
@@ -57,15 +63,103 @@ class CMIP6Search:
             members_count = pd.DataFrame(data_list, columns=['source_id', 'experiment_id', 'num_members'])
         return members_count
     
-    def balance_members(self, num_members, tolerance=0):
+    def balance_members(self, num_members, tolerance=0, filter_running_nodes=True):
         """
         Returns a copy with balanced number of members per dataset
         """
-        if not self.nodes_are_filtered:
-            logging.warning(f"balancing members on unfiltered nodes. This will likely select the wrong data!")
-        # new = ...
-        # new.members_are_balanced = True
-        raise NotImplementedError()
+        if not self.nodes_are_filtered and filter_running_nodes==False:
+            logging.warning(f"balancing members on unfiltered nodes. This will likely select unreachable data!")
+        if filter_running_nodes:
+            filtered_search = self._filter_running_nodes()
+            # apply balance in the filtered search
+            return filtered_search.balance_members(num_members, tolerance, False)
+        # balancing logic
+        # compute N members per source / exp
+        min_members = num_members - tolerance # 2
+        max_members = num_members + tolerance # 4
+        balanced_mc = self.count_members(as_pandas=True).query(f"num_members >= {min_members}")
+        balanced_mc.loc[:,"num_members"] = balanced_mc["num_members"].apply(lambda nm: min(nm, max_members))
+        # select datasets randomly
+        balanced_datasets = []
+        def same_source_and_experiment(dataset):
+            return (dataset.source_id, dataset.experiment_id)
+        sorted_datasets = sorted(self.datasets.copy(), key=same_source_and_experiment)
+        for source_exp, grouped_datasets in groupby(sorted_datasets, key=same_source_and_experiment):
+            grouped_datasets = list(grouped_datasets)
+            # extract N members for this source / experiment
+            n_to_sample = balanced_mc.query(f"source_id == '{source_exp[0]}' & experiment_id == '{source_exp[1]}'")["num_members"].iloc[0]
+            # shuffle and select 
+            random.shuffle(grouped_datasets)
+            balanced_datasets.extend(grouped_datasets[:n_to_sample])
+        # create new object
+        new = self.sub_copy(balanced_datasets)
+        new.members_are_balanced = True
+        return new
+        
+    def _filter_running_nodes(self):
+        """
+        Returns a copy that only has data from nodes that are running
+        """
+        if self.nodes_are_filtered:
+            logging.info(f"Nodes are already balanced, not balancing them again.")
+            return self.copy()
+        new_datasets = []
+        # filter all datasets
+        for dataset in self.datasets:
+            new_dataset = dataset._filter_running_nodes()
+            # ensure non-empty dataset
+            if new_dataset is not None: new_datasets.append(new_dataset)
+        # create new search object
+        new = self.sub_copy(new_datasets)
+        # set flag
+        new.nodes_are_filtered = True
+        return new
+    
+    def _filter_facets(self, **facet_kwargs):
+        """
+        Filter datasets according to a set of facets. Returns a new `CMIP6Search`
+        
+        facet_kwargs (dict): `{facet_name: facet_values}`, with `facet_values` a non-string
+        iterable
+        """
+        filtered_datasets = []
+        # check each dataset to see if they match the filtering criteria
+        for dataset in self.datasets:
+            match = True
+            for facet_name, facet_values in facet_kwargs.items():
+                assert is_iterable_but_not_string(facet_values), f"{facet_name} must be an iterable, got values={facet_values}"
+                # break if not a match
+                if not getattr(dataset, facet_name) in facet_values:
+                    match = False
+                    break
+            # add dataset if match was never false
+            if match:
+                filtered_datasets.append(dataset.copy())
+        # create new cmip6_search
+        new = self.sub_copy(filtered_datasets)
+        return new
+    
+    def _filter_years(self, experiments_temporal_span):
+        """
+        Filter datasets to contain only files within the desired span. Returns a new `CMIP6Search`
+        
+        experiments_temporal_span (dict): {"historical": [start, stop], "projections": [start, stop]}
+        """
+        new_datasets = []
+        # filter all datasets
+        for dataset in self.datasets:
+            # extract temporal span for the dataset's experiment
+            experiment_temporal_span = experiments_temporal_span["historical"] \
+                                       if dataset.experiment_id=="historical" else \
+                                       experiments_temporal_span["projections"]
+            new_dataset = dataset._filter_years(experiment_temporal_span)
+            # ensure non-empty dataset
+            if new_dataset is not None: new_datasets.append(new_dataset)
+        # create new search object
+        new = self.sub_copy(new_datasets)
+        # set flag
+        new.nodes_are_filtered = True
+        return new
     
     def filter(self, kind, **kwargs):
         """
@@ -73,17 +167,16 @@ class CMIP6Search:
         """
         if kind=="running_nodes":
             return self._filter_running_nodes()
-        raise NotImplementedError() 
+        if kind=="facets":
+            return self._filter_facets(**kwargs)
+        if kind=="years":
+            return self._filter_years(**kwargs)
+        raise NotImplementedError(f"filtering {kind} not implemented")
     
-    def splitby(self, split_keys):
-        """
-        returns multiple `CMIP6Search`es by splitting according to
-        `split_keys`
-        """
-        """
-        don't forget to distribute self.datasets and self.datasets_to_local_file if they are not None
-        """
-        raise NotImplementedError()
+    def search(self, facets):
+        # do search
+        results = search_esgf_nodes(facets, self.max_workers)
+        self.datasets = CMIP6Dataset.from_results(results)
         
     def download(self, dest_folder, max_workers=1):
         # check
@@ -128,3 +221,13 @@ class CMIP6Search:
         plt.tight_layout()
         if save_path: fig.savefig(save_path)
         plt.show()
+        
+    def splitby(self, split_keys):
+        """
+        returns multiple `CMIP6Search`es by splitting according to
+        `split_keys`
+        """
+        """
+        don't forget to distribute self.datasets and self.datasets_to_local_file if they are not None
+        """
+        raise NotImplementedError()

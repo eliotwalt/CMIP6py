@@ -1,0 +1,1 @@
+def get_version(result): return result.json["dataset_id"].split("|")[0].rsplit(".")[-1]

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import time
 import json
-from playwright.sync_api import sync_playwright
+import playwright.sync_api
 import logging
 
 from ..commons.constants import CACHE_DIR
@@ -37,7 +37,7 @@ def get_esgf_nodes_status():
 		# see Documents/phd/code/esgf-network-analytics/node_status.py
 		# return nodes_status = {$url: $status}
 		nodes_status = {}
-		with sync_playwright() as p:
+		with playwright.sync_api.sync_playwright() as p:
 			browser = p.chromium.launch(headless=True)  # Run in headless mode
 			page = browser.new_page()
 			# Navigate to the URL
