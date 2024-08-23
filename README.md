@@ -5,12 +5,14 @@ CMIP6py allows to interact with CMIP6 data stored on ESGF nodes with python. Mor
 2. Filtering and visualising CMIP6 data from ESGF nodes
 3. Download CMIP6 data from ESGF nodes
 
+The ESGF network can be somewhat unstable with nodes going offline and data becoming unreachable. CMIP6Py alleviates that issue by allowing to filter, almost in real-time, the running ESGF nodes. This allows to easily locate data on the network and donwload it safely without worrying about network status or duplicated data.
+
 ## Idea
 
 The package is centered around three nested classes:
 - `cmip6py.data.dataset.CMIP6Dataset`: Stores an entire dataset, i.e. model/experiment/member/variable for a given time period. Internally, it maintains a list of `cmip6.data.file.CMIP6File`s.
-- `cmip6.data.CMIP6File`: Stores a single file within a dataset, i.e. model/experiment/member/variable spanning a time period contained in a larger dataset. Internally, it maintains a list of `cmip6py.data.entry.CMIP6Entry`s. 
-- `cmip6py.data.entry.CMIP6Entry`: Stores all the instances of a given file that exist on the nodes of the ESGF network. 
+- `cmip6.data.CMIP6File`: Stores a single file within a dataset, i.e. model/experiment/member/variable spanning a time period contained in a larger dataset. Internally, it maintains a list of equivalent `cmip6py.data.entry.CMIP6Entry`s.
+- `cmip6py.data.entry.CMIP6Entry`: Stores  a single instance of a given file that exist on an ESGF node. Entries are considered equivalent when they represent the same data with possible differences in the gridding (i.e. `table_id` and `grid_label` ESGF facets) and version (we might as well download a slighlty older version than nothing).
 
 ![class organisation overview](./imgs/classes_org.drawio.png "Organisation of CMIP6py main classes")
 
