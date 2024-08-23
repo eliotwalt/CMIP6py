@@ -30,7 +30,8 @@ class CMIP6Entry:
         self.url = result.download_url
         self.size = result.size
         self.entry_key = (self.facets["table_id"], self.facets["version"], self.facets["grid_label"])
-        self.name = f"{Path(result.filename).stem}|{self.data_node}"
+        self.name = f"{Path(result.filename).stem}|{self.data_node}" # for __repr__
+        self.filename = Path(result.filename).stem # for filename when downloading
         
     def __repr__(self):
         return f"{self.__class__.__name__}:{self.name}"
@@ -55,7 +56,7 @@ class CMIP6Entry:
         return esgf_nodes_status.get(self.data_node, False)
 
     def _get_relative_path(self):
-        return Path(*[self.facets[facet] for facet in RELATIVE_PATH_FACETS]) / Path(self.name).with_suffix(".nc")
+        return Path(*[self.facets[facet] for facet in RELATIVE_PATH_FACETS]) / Path(self.filename).with_suffix(".nc")
 
     def _local_file(self, dest_folder):
         local_file = Path(dest_folder) / self._get_relative_path()
@@ -83,7 +84,7 @@ class CMIP6Entry:
         if os.path.exists(local_file):
             try:
                 xr.open_dataset(local_file)
-                logger.info(f"{local_file} already exists. Not downloading.")
+                logger.info(f"{local_file} already exists and is a valid netCDF4 file. Not downloading.")
                 return local_file
             except OSError as e:
                 logger.error(f"{local_file} already exists but is not a valid netCDF4 file: {e}")
@@ -106,7 +107,7 @@ class CMIP6Entry:
         if hasher is None:
             logger.warning(
                 "No checksum available, unable to check data"
-                " integrity for %s, ", self.url)
+                f" integrity for {self.url}, ")
         else:
             local_checksum = hasher.hexdigest()
             if local_checksum != checksum:
@@ -116,9 +117,10 @@ class CMIP6Entry:
                     f" {local_checksum}. Try downloading the file again.")
         # copy to local file
         shutil.move(tmp_file, local_file)
-        logger.info("Downloaded %s (%s) in %s (%s/s) from %s", local_file,
+        logger.info("Downloaded {} ({}) in {} ({}{}) from {}".format(
+                    local_file,
                     format_size(self.size),
                     format_timespan(duration.total_seconds()),
                     format_size(self.size / duration.total_seconds()),
-                    urlparse(self.url).hostname)
+                    urlparse(self.url).hostname))
         return local_file

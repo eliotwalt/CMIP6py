@@ -139,11 +139,11 @@ class CMIP6Search:
         new = self.sub_copy(filtered_datasets)
         return new
     
-    def _filter_years(self, experiments_temporal_span):
+    def _filter_years(self, **span_kwargs):
         """
         Filter datasets to contain only files within the desired span. Returns a new `CMIP6Search`
         
-        experiments_temporal_span (dict): {"historical": [start, stop], "projections": [start, stop]}. Note
+        span_kwargs (dict): {"historical": [start, stop], "projections": [start, stop]}. Note
             that the start is included and stop is excluded. i.e. to get the full historical run you would
             need `"historical": [1850, 2015]"` and full projection run `"projections": [2015, 2101]"`
         """
@@ -151,9 +151,9 @@ class CMIP6Search:
         # filter all datasets
         for dataset in self.datasets:
             # extract temporal span for the dataset's experiment
-            experiment_temporal_span = experiments_temporal_span["historical"] \
+            experiment_temporal_span = span_kwargs["historical"] \
                                        if dataset.experiment_id=="historical" else \
-                                       experiments_temporal_span["projections"]
+                                       span_kwargs["projections"]
             new_dataset = dataset._filter_years(experiment_temporal_span)
             # ensure non-empty dataset
             if new_dataset is not None: new_datasets.append(new_dataset)
@@ -174,6 +174,32 @@ class CMIP6Search:
         if kind=="years":
             return self._filter_years(**kwargs)
         raise NotImplementedError(f"filtering {kind} not implemented")
+        
+    def splitby(self, split_keys):
+        """
+        returns multiple `CMIP6Search`es by splitting according to `split_keys`
+        
+        Args:
+        -----
+            split_keys (list): list of ESGF facets, must all be in ["source_id", "experiment_id", "member_id", "variable"]
+            
+        Returns:
+        --------
+
+        """
+        """
+        don't forget to distribute self.datasets and self.datasets_to_local_file if they are not None
+        """
+        assert all(sk in ["source_id", "experiment_id", "member_id", "variable"] for sk in split_keys)
+        def same_split(dataset):
+            return tuple(getattr(dataset, sk) for sk in split_keys)
+        new_searches = []
+        datasets = sorted(self.datasets.copy(), key=same_split)
+        for _, split_datasets in groupby(datasets, key=same_split):
+            split_datasets = list(split_datasets)
+            new_search = self.sub_copy(split_datasets)
+            new_searches.append(new_search)
+        return new_searches
     
     def search(self, facets):
         # do search
@@ -223,13 +249,3 @@ class CMIP6Search:
         plt.tight_layout()
         if save_path: fig.savefig(save_path)
         plt.show()
-        
-    def splitby(self, split_keys):
-        """
-        returns multiple `CMIP6Search`es by splitting according to
-        `split_keys`
-        """
-        """
-        don't forget to distribute self.datasets and self.datasets_to_local_file if they are not None
-        """
-        raise NotImplementedError()
