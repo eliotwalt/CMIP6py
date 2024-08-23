@@ -18,10 +18,16 @@ The package is centered around three nested classes:
 
 The entry point class is `CMIP6py.search.cmip6_search.CMIP6Search`, which allows to search ESGF network for any CMIP6 data. It leverages `CMIP6Dataset`s internally and provides additional functionalities such as filtering, balancing, visualisation and download. 
 
-## Examples
+## Quickstart
+
+Before starting, make sure to authenticate with your ESGF credentials using `authenticate.py`:
+```bash
+$ python authenticate.py --username USERNAME --hostname HOSTNAME
+> Enter password (USERNAME@HOSTNAME):
+```
 
 Below is a basic CMIP6py workflow:
-```python
+```python 
 >>> from cmip6py.search.cmip6_search import search
 
 # defined search facets
