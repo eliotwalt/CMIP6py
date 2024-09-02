@@ -18,6 +18,7 @@ def logon(verbose=True):
         value = keyring.get_password("ESGF", key)
         if value is None:
             raise KeyError(f"{key} not set in keyring")
+        auth_config[key] = value
     # logon
     manager.logon(**auth_config)
     if manager.is_logged_on():
