@@ -1,5 +1,5 @@
 import argparse
-import getpass
+from getpass import getpass
 
 from cmip6py.commons.auth import set_credentials
 
