@@ -54,7 +54,7 @@ def _search_esgf_nodes(**facets):
             requests.exceptions.HTTPError,
             requests.exceptions.Timeout
         ) as error:
-            logger.error(f"Unable to connect to {url} due to {error}")
+            logger.debug(f"Unable to connect to {url} due to {error}")
             errors.append(error)
     if len(results)==0:
         raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +

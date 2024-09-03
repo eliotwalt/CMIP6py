@@ -87,7 +87,7 @@ class CMIP6Search:
                 logger.debug(f"{model_configuration} is valid {variable_set} is subset of {observed_variable_set}")
                 valid_datasets.extend(grouped_datasets)
             else:
-                logger.error(f"{model_configuration} is NOT valid {variable_set} is NOT subset of {observed_variable_set}")
+                logger.debug(f"{model_configuration} is NOT valid {variable_set} is NOT subset of {observed_variable_set}")
         # create new CMIP6Search from valid_datasets
         new = self.sub_copy(valid_datasets)
         # drop datasets that concern other variables
@@ -244,6 +244,7 @@ class CMIP6Search:
     def search(self, facets):
         # do search
         results = search_esgf_nodes(facets, self.max_workers)
+        logger.info(f"Got {len(results)} from ESGF nodes with facets={facets}")
         self.datasets = CMIP6Dataset.from_results(results)
         
     def download(self, dest_folder, max_workers=1):

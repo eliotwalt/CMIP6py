@@ -55,7 +55,7 @@ class CMIP6Entry:
         """
         esgf_nodes_status = get_esgf_nodes_status()
         if self.data_node not in esgf_nodes_status.keys():
-            logger.warning(f"{self} data_node {self.data_node} not part of the esgf_nodes_status dictionary! Will return False.")
+            logger.debug(f"{self} data_node {self.data_node} not part of the esgf_nodes_status dictionary! Will return False.")
         return esgf_nodes_status.get(self.data_node, False)
 
     def _get_relative_path(self):
