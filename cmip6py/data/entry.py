@@ -24,7 +24,9 @@ class CMIP6Entry:
     """
     def __init__(self, result):
         self.result = result # for copying
-        self.result.__dict__.pop("context")
+        if "context" in self.result.__dict__.keys():
+            # context is a CachedSession object which cannot be pickled
+            self.result.__dict__.pop("context")
         self.facets = self.format_facets(result)
         self.data_node = self.facets["data_node"]
         self.checksum = (result.checksum_type, result.checksum)
