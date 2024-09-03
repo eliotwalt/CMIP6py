@@ -7,6 +7,7 @@ import random
 from itertools import groupby
 import os
 import pickle 
+import warnings
 
 from .search_utils import search_esgf_nodes
 from ..data.dataset import CMIP6Dataset
@@ -289,7 +290,91 @@ class CMIP6Search:
         if save_path: fig.savefig(save_path)
         plt.show()
         
-def search(facets, random_seed=42, max_workers=2*os.cpu_count()):
+def search(
+    facets, 
+    random_seed=42,
+    max_workers=2*os.cpu_count(), 
+    variable_set=None,
+    num_members=None,
+    num_members_tolerance=None,
+    filter_running_nodes=False,
+    save_path=None,
+    **filters
+):
+    """
+    Search ESGF nodes according to the given facets. Extract all available 
+    CMIP6 data
+    
+    Args:
+    -----
+        facets (dict): Facets directory
+        random_seed (int): Random seed
+        max_workers (int): Maximum number of workers for parallel search operations
+        variable_set (list, None): If not None will apply `strict_variable_set` based
+            on the list of variables provided in this argument
+        num_members (int, None): If not None, members will be balanced according to 
+            this argument
+        num_members_tolerance (int, None): If not None, members will be balanced according to 
+            this argument and `num_members`
+        filter_running_nodes (bool): Whether to apply running nodes filtering. Defaults to 
+            `False`. It is strongly advised to be set to `True` if members balancing is 
+            activated.
+        save_path (str, None): If not None the returned `CMIP6Search` object is saved
+            at that location
+        filters (dict): Additional filters. Keys must be in ['years', 'facets'], 
+            e.g. `{"facets": {"source_id": ["EC-Earth3]}], "years": {"historical": [1980, 2014]}}`
+        
+    Returns:
+    --------
+        cmip6_search (CMIP6Search): The corresponding CMIP6Search object
+        
+    Warnings:
+    ---------
+        UserWarning: Members balancing activated without filtering running nodes
+
+    Raises:
+    -------
+        AssertionError: Bad arguments
+    """
+    # Check arguments
+    assert isinstance(facets, dict)
+    assert isinstance(random_seed, int)
+    assert isinstance(max_workers, int)
+    assert isinstance(variable_set, list) or variable_set is None
+    if isinstance(variable_set, list): 
+        assert all(isinstance(v, str) for v in variable_set)
+    assert isinstance(num_members, int) or num_members is None
+    assert isinstance(num_members_tolerance, int) or num_members_tolerance is None
+    if num_members_tolerance is not None:
+        assert num_members is not None, "Setting `num_members_tolerance` requires setting `num_members`"
+    assert isinstance(filter_running_nodes, bool)
+    if num_members is not None and not filter_running_nodes:
+        warnings.warn("Members balancing is activated but running nodes will not be filtered. "\
+                      "This could lead to selecting unreachable data!", category=warnings.UserWarnings)
+    assert isinstance(save_path, str)
+    for filter_kind in filters.keys():
+        assert filter_kind in ["years", "facets"], f"Invalid filter kind: {filter_kind}"        
+    # basic search
     cmip6_search = CMIP6Search(random_seed, max_workers)
     cmip6_search.search(facets)
+    # strict variable set
+    if variable_set is not None:
+        cmip6_search = cmip6_search.strict_variable_set(variable_set=variable_set)
+    # additional filters
+    for filter_kind, filter_values in filters.items():
+        cmip6_search = cmip6_search.filter(filter_kind, filter_values)
+    # running nodes
+    if filter_running_nodes:
+        cmip6_search = cmip6_search.filter("running_nodes")
+    # balance members
+    if num_members is not None:
+        if num_members_tolerance is None: num_members_tolerance = 0
+        cmip6_search.balance_members(num_members=num_members,
+                                     num_members_tolerance=num_members_tolerance)
+    # save
+    if save_path is not None:
+        try:
+            cmip6_search.save(save_path)
+        except Exception as e:
+            logger.error(f"Could not save CMIP6Search object at {save_path}: {e}")
     return cmip6_search
