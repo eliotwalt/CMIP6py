@@ -169,7 +169,7 @@ class CMIP6Dataset:
         for entry_key in self.entry_keys_set:
             # get dataset entries
             entries = self.sample_entry_key(entry_key)
-            logger.info(f"Attempting to download {self} with entries_key={entry_key} and {len(entries)} individual entries (max parallel jobs: {max_workers})")
+            logger.debug(f"Attempting to download {self} with entries_key={entry_key} and {len(entries)} individual entries (max parallel jobs: {max_workers})")
             # download 
             local_files = []
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

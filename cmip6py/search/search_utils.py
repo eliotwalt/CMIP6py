@@ -41,13 +41,13 @@ def _search_esgf_nodes(**facets):
             pyesgf.search.context.FileSearchContext,
             **facets,
         )
-        logger.info(f"Searching {url} for datasets using facets={facets}")
+        logger.debug(f"Searching {url} for datasets using facets={facets}")
         try:
             url_results = list(context.search(
                 batch_size=500,
                 ignore_facet_check=True,
             ))
-            logger.info(f"Got {len(url_results)} results from {url} using facets={facets}")
+            logger.debug(f"Got {len(url_results)} results from {url} using facets={facets}")
             results.extend(url_results)
         except (
             requests.exceptions.ConnectionError,

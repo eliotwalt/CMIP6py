@@ -87,13 +87,13 @@ class CMIP6Entry:
         if os.path.exists(local_file):
             try:
                 xr.open_dataset(local_file)
-                logger.info(f"{local_file} already exists and is a valid netCDF4 file. Not downloading.")
+                logger.warning(f"{local_file} already exists and is a valid netCDF4 file. Not downloading.")
                 return local_file
             except OSError as e:
                 logger.error(f"{local_file} already exists but is not a valid netCDF4 file: {e}")
                 raise e
         # start download
-        logger.info(f"Downloading {self.name} from {self.data_node} to {tmp_file}")
+        logger.debug(f"Downloading {self.name} from {self.data_node} to {tmp_file}")
         start_time = datetime.now()
         response = requests.get(self.url, stream=True, timeout=ESGF_DOWNLOAD_TIMEOUT)
         response.raise_for_status()
@@ -120,7 +120,7 @@ class CMIP6Entry:
                     f" {local_checksum}. Try downloading the file again.")
         # copy to local file
         shutil.move(tmp_file, local_file)
-        logger.info("Downloaded {} ({}) in {} ({}{}) from {}".format(
+        logger.debug("Downloaded {} ({}) in {} ({}{}) from {}".format(
                     local_file,
                     format_size(self.size),
                     format_timespan(duration.total_seconds()),

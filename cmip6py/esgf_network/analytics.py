@@ -66,7 +66,7 @@ def get_esgf_nodes_status():
 		try:
 			return load_cache()
 		except Exception as e:
-			logger.info(f"could not load esgf nodes status from cache, fetching again")
+			logger.error(f"could not load esgf nodes status from cache, fetching again")
 	nodes_status = fetch_nodes_status()
 	write_cache(nodes_status)
 	return nodes_status
