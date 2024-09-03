@@ -359,20 +359,25 @@ def search(
     cmip6_search.search(facets)
     # strict variable set
     if variable_set is not None:
+        logger.info(f"filtering variable set: {variable_set}")
         cmip6_search = cmip6_search.strict_variable_set(variable_set=variable_set)
     # additional filters
     for filter_kind, filter_values in filters.items():
-        cmip6_search = cmip6_search.filter(filter_kind, filter_values)
+        logger.info(f"filtering {filter_kind}: {filter_values}")
+        cmip6_search = cmip6_search.filter(filter_kind, **filter_values)
     # running nodes
     if filter_running_nodes:
+        logger.info("filtering running nodes")
         cmip6_search = cmip6_search.filter("running_nodes")
     # balance members
     if num_members is not None:
         if num_members_tolerance is None: num_members_tolerance = 0
-        cmip6_search.balance_members(num_members=num_members,
-                                     num_members_tolerance=num_members_tolerance)
+        logger.info(f"balancing members: N={num_members}±{num_members_tolerance}")
+        cmip6_search = cmip6_search.balance_members(num_members=num_members,
+                                     tolerance=num_members_tolerance)
     # save
     if save_path is not None:
+        logger.info(f"saving CMIP6Search object to {save_path}")
         try:
             cmip6_search.save(save_path)
         except Exception as e:

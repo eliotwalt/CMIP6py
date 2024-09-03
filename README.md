@@ -26,15 +26,16 @@ $ python authenticate.py --username USERNAME --hostname HOSTNAME
 > Enter password (USERNAME@HOSTNAME):
 ```
 
-Below is a basic CMIP6py workflow:
+The example below shows the basic workflow of `CMIP6Py`. Note that the `cmip6py.search.cmip6_search.search()` function regroups all the operations before downaloading in the correct order, providing a simpler and safer API.
 ```python 
->>> from cmip6py.search.cmip6_search import search
+>>> from cmip6py.search.cmip6_search import CMIP6Search
 
 # defined search facets
 >>> search_facets = {"experiment_id": ["historical", "ssp245"], "source_id": ["EC-Earth3", "MPI-ESM1-2-HR"], "variable": ["ua", "va"], "table_id": ["Eday", "day", "Oday"]}
 
 # create a CMIP6Search object and perform search
->>> cmip6_search = search(search_facets, random_seed=43, max_workers=12)
+>>> cmip6_search = CMIP6Search(random_seed=43, max_workers=12)
+>>> cmip6_search = CMIP6Search(search_facets)
 >>> cmip6_search
 'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=False,members_are_balanced=False'
 

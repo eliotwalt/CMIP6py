@@ -36,7 +36,6 @@ def _search_esgf_nodes(**facets):
     errors = [] # gather errors
     results = [] # gather results for all urls (unlike ESMValCore)
     for url in urls:
-        #logger.info(f"Searching {url} for datasets using facets={facets}")
         connection = pyesgf.search.SearchConnection(url=url, **pyesgf_config)
         context = connection.new_context(
             pyesgf.search.context.FileSearchContext,
