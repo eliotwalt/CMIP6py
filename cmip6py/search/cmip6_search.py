@@ -84,10 +84,10 @@ class CMIP6Search:
             observed_variable_set = set(ds.variable for ds in grouped_datasets)
             # check if asked variable set is subset of obeserved one
             if variable_set.issubset(observed_variable_set):
-                logger.debug(f"{model_configuration} is valid {variable_set} is subset of {observed_variable_set}")
+                logger.info(f"{model_configuration} is valid {variable_set} is subset of {observed_variable_set}")
                 valid_datasets.extend(grouped_datasets)
             else:
-                logger.debug(f"{model_configuration} is NOT valid {variable_set} is NOT subset of {observed_variable_set}")
+                logger.warning(f"{model_configuration} is NOT valid {variable_set} is NOT subset of {observed_variable_set}")
         # create new CMIP6Search from valid_datasets
         new = self.sub_copy(valid_datasets)
         # drop datasets that concern other variables

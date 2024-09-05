@@ -10,3 +10,4 @@ __pycache__
 cmip6_data/
 notebooks/debug.ipynb
 *.nc
+drafts

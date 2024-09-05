@@ -113,6 +113,7 @@ def search_esgf_nodes(facets, max_workers=1):
                 futures.append(executor.submit(
                     _search_esgf_nodes, **these_facets
                 ))
+            logger.info(f"Submitted {len(futures)} parallel searches (max_workers={max_workers})")
             for future in concurrent.futures.as_completed(futures):
                 these_results = future.result()
                 results.extend(these_results)
