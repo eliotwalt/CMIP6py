@@ -4,6 +4,7 @@ from pathlib import Path
 # Paths
 CMIP6PY_DIR = Path.home() / ".cmip6py" ; os.makedirs(CMIP6PY_DIR, exist_ok=True)
 CACHE_DIR = CMIP6PY_DIR / "cache" ; os.makedirs(CACHE_DIR, exist_ok=True)
+CRED_FILE = CMIP6PY_DIR / "credentials.yaml"
 
 # CONFIGS
 PYESGF_CONFIG = {

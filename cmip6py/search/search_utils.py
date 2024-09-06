@@ -47,14 +47,15 @@ def _search_esgf_nodes(**facets):
                 batch_size=500,
                 ignore_facet_check=True,
             ))
-            logger.debug(f"Got {len(url_results)} results from {url} using facets={facets}")
+            logger.info(f"Got {len(url_results)} results from {url} (variable={facets['variable']}, exp={facets['experiment_id']})")
             results.extend(url_results)
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
-            requests.exceptions.Timeout
+            requests.exceptions.Timeout,
+            requests.exceptions.ChunkedEncodingError
         ) as error:
-            logger.debug(f"Unable to connect to {url} due to {error}")
+            logger.error(f"Unable to connect to {url} due to {type(error).__name__} (variable={facets['variable']}, exp={facets['experiment_id']})")
             errors.append(error)
     if len(results)==0:
         raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
