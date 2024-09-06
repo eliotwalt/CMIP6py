@@ -7,7 +7,7 @@ logger = logging.getLogger()
 
 from .constants import AUTH_KEYS, CRED_FILE
         
-def set_credentials(hostname, username, password):
+def set_credentials(hostname, username, password, verbose=False):
     """
     Writes credentials to keyring or locally
     """
@@ -26,7 +26,7 @@ def set_credentials(hostname, username, password):
                                 "password": password},
                                f, default_flow_style=False, sort_keys=False)
             os.chmod(CRED_FILE, 0o700)
-    logon()
+    logon(verbose)
     
 def logon(verbose=True):
     """

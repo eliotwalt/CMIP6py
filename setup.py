@@ -34,9 +34,9 @@ setup(
     ],
     # extras_require={
     # },
-    # cmdclass={
-    #     'install': CustomInstallCommand,
-    # },
+    cmdclass={
+        'install': CustomInstallCommand,
+    },
     author="Eliot Walt",
     author_email="walt.eliot@hotmail.com",
     description="A Python package for CMIP6 data processing.",
