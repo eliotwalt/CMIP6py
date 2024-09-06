@@ -47,7 +47,11 @@ def logon(verbose=True):
             raise KeyError(f"{key} not found")
         auth_config[key] = value
     # logon
-    manager.logon(**auth_config)
+    try:
+        manager.logon(**auth_config)
+    except:
+        manager.logon(**auth_config, bootstrap=True)
+        
     if manager.is_logged_on():
         if verbose: logger.info("Logged on to ESGF")
     else:
