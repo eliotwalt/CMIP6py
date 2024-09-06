@@ -68,6 +68,21 @@ class CMIP6Search:
         new.nodes_are_filtered = self.nodes_are_filtered
         return new
     
+    @classmethod
+    def concat(cls, cmip6_searches):
+        # create
+        new = cls(cmip6_searches[0].random_seed, cmip6_searches[0].max_workers)
+        # add attributes
+        new.nodes_are_filtered = True # remain true only if all true
+        new.nodes_are_balanced = True # remain true only if all true
+        for s in cmip6_searches:
+            new.datasets.append(s.datasets)
+            for ds, lfs in s.datasets_to_local_files.items():
+                new.datasets_to_local_files[ds] = lfs
+            new.nodes_are_filtered &= s.nodes_are_filtered
+            new.nodes_are_balanced &= s.nodes_are_balanced
+        return new
+    
     def strict_variable_set(self, variable_set):
         """
         Select model configurations (source_id, experiment_id, member_id) that have all the variables

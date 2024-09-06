@@ -1,6 +1,7 @@
 __pycache__
 .ipynb_checkpoints/
 *.pyc
+*.egg-info
 
 *.egg-info
 
