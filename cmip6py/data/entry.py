@@ -29,13 +29,13 @@ class CMIP6Entry:
         self.checksum = result_info["checksum"]
         self.url = result_info["url"]
         self.size = result_info["size"]
-        self.name = result_info["name"]
+        self.filename = result_info["filename"]
         # build extra attributes
         self.data_node = result_info["facets"]["data_node"]
         self.entry_key = (result_info["facets"]["table_id"], 
                           result_info["facets"]["version"], 
                           result_info["facets"]["grid_label"])
-        self.filename = f"{result_info['name']|result_info['facets']['data_node']}"
+        self.name = f"{result_info['filename']}|{result_info['facets']['data_node']}"
         
     @classmethod
     def from_result(cls, result):

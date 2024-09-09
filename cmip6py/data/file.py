@@ -1,6 +1,7 @@
 import logging
 from itertools import groupby
 from datetime import datetime
+from copy import deepcopy
 
 from ..commons.constants import RESULTS_FACETS_ORDERING
 from ..commons.utils import extract_esgf_file_datetimes
@@ -12,7 +13,6 @@ logger = logging.getLogger(__name__)
 class CMIP6File:
     def __init__(self, results):
         # Initialise static facets from the first result in the list
-        self.results = results.copy() # for copying
         facets = results[0].json.copy()
         self.source_id = facets.pop("source_id")[0]
         self.experiment_id = facets.pop("experiment_id")[0]
@@ -34,7 +34,7 @@ class CMIP6File:
         return f"{self.__class__.__name__}:{self.name}"
     
     def copy(self): 
-        return CMIP6File(self.results)
+        return deepcopy(self)
 
     def _convert_to_sorted_entries(self, results):
         """
