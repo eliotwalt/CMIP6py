@@ -66,7 +66,7 @@ class CMIP6File:
             )                
         results = list(sorted(results, key=get_sort_key))
         # convert to enrties
-        entries = [CMIP6Entry(result) for result in results]
+        entries = [CMIP6Entry.from_result(result) for result in results]
         # remove duplicates (due to the fact that we search ALL ESGF nodes)
         unique_entries = CMIP6File._remove_duplicate_entries(entries)
         return unique_entries

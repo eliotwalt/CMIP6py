@@ -38,9 +38,13 @@ class CMIP6Search:
     
     def save(self, path):
         """save to disk"""
-        with open(path, mode="wb") as h:
-            pickle.dump(self, h)
-        return path
+        try:
+            with open(path, mode="wb") as h:
+                pickle.dump(self, h)
+            return path
+        except Exception as e:
+            os.remove(path)
+            raise e
 
     @classmethod
     def load(cls, path):

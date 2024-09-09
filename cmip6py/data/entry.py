@@ -22,27 +22,44 @@ class CMIP6Entry:
     """
     Wrapper around `pyesgf.search.results.FileResult` with download utilities
     """
-    def __init__(self, result):
-        self.result = result # for copying
-        if "context" in self.result.__dict__.keys():
-            # context is a CachedSession object which cannot be pickled
-            self.result.__dict__.pop("context")
-        self.facets = self.format_facets(result)
-        self.data_node = self.facets["data_node"]
-        self.checksum = (result.checksum_type, result.checksum)
-        self.url = result.download_url
-        self.size = result.size
-        self.entry_key = (self.facets["table_id"], self.facets["version"], self.facets["grid_label"])
-        self.name = f"{Path(result.filename).stem}|{self.data_node}" # for __repr__
-        self.filename = Path(result.filename).stem # for filename when downloading
+    def __init__(self, result_info):
+        # copy attributes
+        self.result_info = result_info
+        self.facets = result_info["facets"]
+        self.checksum = result_info["checksum"]
+        self.url = result_info["url"]
+        self.size = result_info["size"]
+        self.name = result_info["name"]
+        # build extra attributes
+        self.data_node = result_info["facets"]["data_node"]
+        self.entry_key = (result_info["facets"]["table_id"], 
+                          result_info["facets"]["version"], 
+                          result_info["facets"]["grid_label"])
+        self.filename = f"{result_info['name']|result_info['facets']['data_node']}"
+        
+    @classmethod
+    def from_result(cls, result):
+        """ 
+        Extract information from result object and create CMIP6Entry objecr
+        """
+        # extract direct attributes
+        result_info = {
+            "facets": CMIP6Entry.format_facets(result),
+            "checksum": (result.checksum_type, result.checksum),
+            "url": result.download_url,
+            "size": result.size,
+            "filename": Path(result.filename).stem # for filename 
+        }
+        return CMIP6Entry(result_info)        
         
     def __repr__(self):
         return f"{self.__class__.__name__}:{self.name}"
     
     def copy(self):
-        return CMIP6Entry(self.result)
+        return CMIP6Entry(self.result_info)
     
-    def format_facets(self, result):
+    @staticmethod
+    def format_facets(result):
         facets = {facet: value[0] if is_iterable_but_not_string(value) else value
                  for facet, value in result.json.items()}
         # update version
