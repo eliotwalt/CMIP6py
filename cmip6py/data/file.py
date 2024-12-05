@@ -6,19 +6,20 @@ from copy import deepcopy
 from ..commons.constants import RESULTS_FACETS_ORDERING
 from ..commons.utils import extract_esgf_file_datetimes
 from .entry import CMIP6Entry
-from .data_utils import get_version
+from .data_utils import get_version, get_facets
 
 logger = logging.getLogger(__name__)
         
 class CMIP6File:
     def __init__(self, results):
         # Initialise static facets from the first result in the list
-        facets = results[0].json.copy()
+        facets = get_facets(results[0], as_list=True).copy()
         self.source_id = facets.pop("source_id")[0]
         self.experiment_id = facets.pop("experiment_id")[0]
         self.member_id = facets.pop("member_id")[0]
         self.variable = facets.pop("variable")[0]
-        self.start_date, self.end_date = extract_esgf_file_datetimes(results[0].filename, as_datetime=True)
+        filename = results[0]["filename"] if isinstance(results[0], dict) else results[0].filename
+        self.start_date, self.end_date = extract_esgf_file_datetimes(filename, as_datetime=True)
         self.name = CMIP6File._make_name(results[0])
         # Create varying facets
         self.entries = self._convert_to_sorted_entries(results)
@@ -60,9 +61,9 @@ class CMIP6File:
         # sort results
         def get_sort_key(result):
             return (
-                RESULTS_FACETS_ORDERING["table_id"].index(result.json["table_id"][0]),
+                RESULTS_FACETS_ORDERING["table_id"].index(get_facets(result, as_list=True)["table_id"][0]),
                 versions.index(get_version(result)),
-                RESULTS_FACETS_ORDERING["grid_label"].index(result.json["grid_label"][0]),
+                RESULTS_FACETS_ORDERING["grid_label"].index(get_facets(result, as_list=True)["grid_label"][0]),
             )                
         results = list(sorted(results, key=get_sort_key))
         # convert to enrties
@@ -84,8 +85,9 @@ class CMIP6File:
 
     @staticmethod
     def _make_name(result):
-        facets = result.json
-        start_date, end_date = extract_esgf_file_datetimes(result.filename, as_datetime=False)
+        facets = get_facets(result, as_list=True)
+        filename = result["filename"] if isinstance(result, dict) else result.filename
+        start_date, end_date = extract_esgf_file_datetimes(filename, as_datetime=False)
         return facets["source_id"][0] + "_" + \
                facets["experiment_id"][0] + "_" + \
                facets["member_id"][0] + "_" + \
@@ -117,7 +119,7 @@ class CMIP6File:
         new_entry_results = []
         for entry in self.entries:
             if entry.is_on_running_node():
-                new_entry_results.append(entry.result)
+                new_entry_results.append(entry.result_info)
         # return none if empty
         if len(new_entry_results)==0:
             logger.warning(f"Filtering running nodes on {self} resulted in empty file!")

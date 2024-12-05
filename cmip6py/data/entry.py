@@ -14,7 +14,7 @@ from ..esgf_network.analytics import get_esgf_nodes_status
 from ..commons.constants import RELATIVE_PATH_FACETS, ESGF_DOWNLOAD_TIMEOUT
 from ..commons.exceptions import DownloadError
 from ..commons.utils import is_iterable_but_not_string
-from .data_utils import get_version
+from .data_utils import get_version, get_facets
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ class CMIP6Entry:
         """ 
         Extract information from result object and create CMIP6Entry objecr
         """
+        if isinstance(result, dict): return CMIP6Entry(result)
         # extract direct attributes
         result_info = {
             "facets": CMIP6Entry.format_facets(result),
@@ -61,7 +62,7 @@ class CMIP6Entry:
     @staticmethod
     def format_facets(result):
         facets = {facet: value[0] if is_iterable_but_not_string(value) else value
-                 for facet, value in result.json.items()}
+                 for facet, value in get_facets(result, as_list=True).items()}
         # update version
         facets["version"] = get_version(result)
         return facets

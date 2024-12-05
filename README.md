@@ -7,6 +7,15 @@ CMIP6py allows to interact with CMIP6 data stored on ESGF nodes with python. Mor
 
 The ESGF network can be somewhat unstable with nodes going offline and data becoming unreachable. CMIP6Py alleviates that issue by allowing to filter, almost in real-time, the running ESGF nodes. This allows to easily locate data on the network and donwload it safely without worrying about network status or duplicated data.
 
+## Installation
+
+Clone this repository, (activate your environment), and run
+```
+pip install --upgrade pip setuptools
+pip install -e .
+playwright install
+```
+
 ## Idea
 
 The package is centered around three nested classes:
@@ -111,25 +120,19 @@ The example below shows the basic workflow of `CMIP6Py`. Note that the `cmip6py.
  'CMIP6Search:random_seed=43,n_datasets=4,nodes_are_filtered=True,members_are_balanced=True']
 ```
 
-## Installation
-
-Clone this repository, (activate your environment), and run
-```
-pip install --upgrade pip setuptools
-pip install -e .
-playwright install
-```
-
 ## Troubleshooting
 
 **Playwright Sync / Async API in Jupyter notebooks**
 
-This error shows up when running `cmip6py.esgf_network.analytics.get_esgf_nodes_status()` from a jupyter notebook. Run the command in the termninal first to load the status file in cache. You can use the `init_esgf_nodes.py` script for that.
+This error shows up when running `cmip6py.esgf_network.analytics.get_esgf_nodes_status()` from a jupyter notebook. Run the command in the termninal first to load the status file in cache. The error looks like:
 ```
 Error: It looks like you are using Playwright Sync API inside the asyncio loop.
 Please use the Async API instead.
 ```
-
+Scrap the network status directly from the terminal and rerun the notebook/cell:
+```
+python init_esgf_nodes.py
+```
 
 
 
