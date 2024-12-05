@@ -41,7 +41,7 @@ The example below shows the basic workflow of `CMIP6Py`. Note that the `cmip6py.
 
 # create a CMIP6Search object and perform search
 >>> cmip6_search = CMIP6Search(random_seed=43, max_workers=12)
->>> cmip6_search = CMIP6Search(search_facets)
+>>> cmip6_search.search(search_facets)
 >>> cmip6_search
 'CMIP6Search:random_seed=43,n_datasets=368,nodes_are_filtered=False,members_are_balanced=False'
 

@@ -3,6 +3,7 @@ import time
 import json
 from playwright.sync_api import sync_playwright, expect
 import logging
+from urllib.parse import urlparse
 
 from ..commons.constants import CACHE_DIR
 
@@ -53,7 +54,8 @@ def get_esgf_nodes_status():
 					if cells.count() > 1:
 						node = cells.nth(0).inner_text().strip()
 						status = True if cells.nth(1).inner_text().strip().lower() == "yes" else False
-						nodes_status[node] = status
+						hostname = urlparse(node).hostname
+						nodes_status[hostname] = status
 					else:
 						logger.error(f'Expected cells not found in row: {cells}')
 			except Exception as e:
