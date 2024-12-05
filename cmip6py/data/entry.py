@@ -111,7 +111,7 @@ class CMIP6Entry:
                 logger.error(f"{local_file} already exists but is not a valid netCDF4 file: {e}")
                 raise e
         # start download
-        logger.debug(f"Downloading {self.name} from {self.data_node} to {tmp_file}")
+        logger.info(f"Downloading {self.name} from {self.data_node} to {tmp_file}")
         start_time = datetime.now()
         response = requests.get(self.url, stream=True, timeout=ESGF_DOWNLOAD_TIMEOUT)
         response.raise_for_status()
@@ -137,6 +137,7 @@ class CMIP6Entry:
                     f" downloaded from {self.url}: expected {checksum}, but got"
                     f" {local_checksum}. Try downloading the file again.")
         # copy to local file
+        logger.info(f"Moving {self.name} from {tmp_file} to {local_file}")
         shutil.move(tmp_file, local_file)
         logger.debug("Downloaded {} ({}) in {} ({}{}) from {}".format(
                     local_file,
