@@ -109,6 +109,7 @@ The example below shows the basic workflow of `CMIP6Py`. Note that the `cmip6py.
 
 Clone this repository and run
 ```
+pip install --upgrade pip setuptools
 pip install -e .
 ```
 

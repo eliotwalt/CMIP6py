@@ -12,3 +12,4 @@ cmip6_data/
 notebooks/debug.ipynb
 *.nc
 drafts
+env/
