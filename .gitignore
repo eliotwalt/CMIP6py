@@ -13,3 +13,5 @@ notebooks/debug.ipynb
 *.nc
 drafts
 env/
+*.pkl
+.DS_Store

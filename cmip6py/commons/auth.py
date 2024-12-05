@@ -7,7 +7,7 @@ logger = logging.getLogger()
 
 from .constants import AUTH_KEYS, CRED_FILE
         
-def set_credentials(hostname, username, password, verbose=False):
+def set_credentials(hostname, username, password, verbose=False, use_keyring=True):
     """
     Writes credentials to keyring or locally
     """
@@ -15,6 +15,7 @@ def set_credentials(hostname, username, password, verbose=False):
                 "username": username, 
                 "password": password}.items():
         try:
+            if not use_keyring: raise Exception("keyring disabled")
             # write to keyring using OS backend
             keyring.set_password("ESGF", key, value)
         except Exception as e:
@@ -26,17 +27,19 @@ def set_credentials(hostname, username, password, verbose=False):
                                 "password": password},
                                f, default_flow_style=False, sort_keys=False)
             os.chmod(CRED_FILE, 0o700)
-    logon(verbose)
+    logon(verbose, use_keyring)
     
-def logon(verbose=True):
+def logon(verbose=True, use_keyring=True):
     """
     Reads credentials from keyring or locally
     """
+    if not use_keyring: logger.info("keyring disabled by user")
     manager = pyesgf.logon.LogonManager()
     # auth_config
     auth_config = {}
     for key in AUTH_KEYS:
         try:
+            if not use_keyring: raise Exception("keyring disabled")
             # retrieve from keyring
             value = keyring.get_password("ESGF", key)
         except Exception as e:

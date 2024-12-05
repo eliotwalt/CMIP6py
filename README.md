@@ -25,6 +25,12 @@ Before starting, make sure to authenticate with your ESGF credentials using `aut
 $ python authenticate.py --username USERNAME --hostname HOSTNAME
 > Enter password (USERNAME@HOSTNAME):
 ```
+Not that this uses the default password manager of your OS (e.g. keychain on macOS). If this does not work, you can disable this mechanism explicitly:
+```bash
+$ python authenticate.py --username USERNAME --hostname HOSTNAME --disable_keyring
+> Enter password (USERNAME@HOSTNAME):
+```
+Note that this will create a protected yet cleartext file with your credentials at `CRED_FILE` (see `cmip6py/commons/constants.py`)
 
 The example below shows the basic workflow of `CMIP6Py`. Note that the `cmip6py.search.cmip6_search.search()` function regroups all the operations before downaloading in the correct order, providing a simpler and safer API.
 ```python 
@@ -107,10 +113,11 @@ The example below shows the basic workflow of `CMIP6Py`. Note that the `cmip6py.
 
 ## Installation
 
-Clone this repository and run
+Clone this repository, (activate your environment), and run
 ```
 pip install --upgrade pip setuptools
 pip install -e .
+playwright install
 ```
 
 ## Troubleshooting
