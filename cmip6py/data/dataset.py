@@ -141,7 +141,7 @@ class CMIP6Dataset:
         try:
             local_file = entry.download(dest_folder)
             error = None
-        except Exception as e:
+        except DownloadError as e:
             logger.debug(f"Failed to download {entry} due to: {e}")
             error = e
             local_file = None
